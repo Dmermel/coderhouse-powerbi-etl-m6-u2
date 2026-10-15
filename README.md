@@ -5,35 +5,35 @@
 
 En este trabajo práctico utilicé Power BI Desktop y Power Query para preparar un archivo de ventas exportado desde un sistema de gestión.
 
-El objetivo fue revisar la calidad de los datos, corregir problemas en las columnas, tratar valores faltantes y eliminar registros duplicados. También separé la información de clientes y ventas para dejar una estructura más organizada y facilitar futuros análisis.
+El objetivo fue revisar la calidad de los datos, corregir los tipos de datos, tratar valores faltantes y eliminar registros duplicados. También separé la información de clientes y ventas para organizar mejor la estructura y facilitar futuros análisis.
 
 ## Archivos de la entrega
 
-**Documentación principal:**
+### Documentación principal
 
-[Ver documentación completa en PDF](Pipeline_ETL_Mermel_Dylan_prolijo.pdf)
+**[Ver documentación completa en PDF](Pipeline_ETL_Mermel_Dylan.pdf)**
 
-El PDF contiene las explicaciones del trabajo realizado, las decisiones tomadas durante la limpieza y las capturas de los pasos aplicados en Power Query.
+El documento incluye las explicaciones del procedimiento, las decisiones tomadas durante la limpieza y las capturas de pantalla de Power Query y del modelo de datos.
 
-**Proyecto de Power BI:**
+### Proyecto de Power BI
 
-[Descargar proyecto de Power BI (.pbix)](https://drive.google.com/file/d/1oU7qFZRlORuooFUsM5qdzEx2nLRyB4I9/view?usp=drive_link)
+**[Descargar proyecto de Power BI (.pbix)](https://drive.google.com/file/d/1oU7qFZRlORuooFUsM5qdzEx2nLRyB4I9/view?usp=drive_link)**
 
-Desde este archivo se pueden revisar las consultas, las transformaciones y el modelo de datos en Power BI Desktop.
+El archivo está disponible en Google Drive y permite revisar las consultas, los pasos aplicados y las relaciones entre las tablas en Power BI Desktop.
 
 ## 1. Importación de datos
 
 Comencé importando el archivo `Ventas_export_legacy.xlsx` mediante el conector de Excel de Power BI.
 
-Una vez cargado, ingresé al Editor de Power Query para revisar las columnas y detectar posibles problemas antes de trabajar con los datos.
+Una vez cargado, ingresé al Editor de Power Query para revisar las columnas y detectar posibles problemas antes de comenzar con las transformaciones.
 
-El archivo original contenía 949 registros y 20 columnas.
+El archivo original contenía **949 registros y 20 columnas**.
 
 ## 2. Renombrar columnas
 
-El archivo tenía nombres técnicos como `COD_CLI`, `F_VTA` y `TOT_VTA`, que no eran demasiado descriptivos.
+El archivo tenía nombres técnicos como `COD_CLI`, `F_VTA` y `TOT_VTA`, que no resultaban demasiado descriptivos.
 
-Para mejorar la lectura y el mantenimiento de la información, cambié los encabezados por nombres en español utilizando el formato `snake_case`.
+Para mejorar la lectura de la información, cambié los encabezados por nombres en español utilizando el formato `snake_case`.
 
 Algunos ejemplos:
 
@@ -49,48 +49,48 @@ Algunos ejemplos:
 | DTO_PCT | descuento_pct |
 | TOT_VTA | total_venta |
 
-De esta forma, las columnas resultan más fáciles de identificar al momento de realizar consultas y análisis.
+De esta manera, las columnas son más fáciles de identificar al realizar consultas o construir reportes.
 
 ## 3. Corrección de tipos de datos
 
 Revisé los tipos de datos asignados por Power Query y realicé los ajustes necesarios.
 
-- **Fecha:** para `fecha_venta` y `fecha_alta_cliente`.
-- **Número entero:** para `cantidad`.
-- **Número decimal:** para precios, descuentos e importes.
-- **Texto:** para nombres, correos, teléfonos, códigos identificadores y categorías.
+- **Fecha:** `fecha_venta` y `fecha_alta_cliente`.
+- **Número entero:** `cantidad`.
+- **Número decimal:** precios, descuentos e importes.
+- **Texto:** nombres, correos, teléfonos, códigos identificadores y categorías.
 
-En el caso de los identificadores, utilicé texto porque representan códigos y no cantidades con las que necesite realizar cálculos matemáticos.
+En el caso de los identificadores, decidí conservarlos como texto porque representan códigos y no cantidades sobre las que necesite realizar operaciones matemáticas.
 
-Esta revisión es importante porque un tipo de dato incorrecto puede generar problemas al realizar operaciones, filtros o análisis temporales.
+Esta revisión es importante porque utilizar un tipo de dato incorrecto puede generar problemas al aplicar filtros, realizar cálculos o analizar fechas.
 
 ## 4. Tratamiento de valores nulos
 
 Durante la revisión encontré valores faltantes en distintas columnas.
 
-En `descuento_pct`, reemplacé los valores nulos por cero, considerando para este ejercicio que un descuento no informado equivale a una venta sin descuento aplicado.
+En `descuento_pct`, reemplacé los valores nulos por cero, considerando para este ejercicio que un descuento no informado equivale a una venta sin descuento.
 
-En `total_venta`, decidí no reemplazar directamente los valores vacíos por cero, ya que eso podía afectar los resultados de facturación.
+En `total_venta`, decidí no reemplazar directamente los valores vacíos por cero porque eso podía afectar los resultados de facturación.
 
-Para recuperar los importes faltantes creé la columna `total_venta_calculado`, utilizando la siguiente lógica:
+Para recuperar los importes faltantes creé una columna llamada `total_venta_calculado`, utilizando la siguiente fórmula:
 
 `cantidad * precio_unitario * (1 - descuento_pct)`
 
-La fórmula conserva el importe original cuando existe y realiza el cálculo cuando está vacío.
+La columna conserva el importe original cuando está disponible y realiza el cálculo cuando falta.
 
-Después identifiqué cuatro registros que no contenían información de operación, cliente ni importe, por lo que decidí excluirlos.
+Después identifiqué cuatro registros sin información de operación, cliente ni importe, por lo que decidí excluirlos.
 
-Los valores faltantes de correo electrónico y teléfono se conservaron porque no impedían identificar las ventas ni realizar el análisis comercial.
+En cambio, conservé los valores faltantes de correo electrónico y teléfono, ya que no impedían identificar las operaciones comerciales.
 
 ## 5. Eliminación de duplicados
 
 Revisé los registros que compartían un mismo identificador de operación.
 
-Primero comprobé que tener el mismo ID no significa necesariamente que una venta esté duplicada, ya que una operación podría contener distintos productos.
+Primero comprobé que tener el mismo ID no significa necesariamente que una venta esté duplicada, porque una operación podría incluir más de un producto.
 
-Por ese motivo, eliminé las filas completamente duplicadas considerando todas las columnas y no solamente `id_operacion`.
+Por ese motivo, eliminé las filas completamente duplicadas considerando todas las columnas, en lugar de utilizar solamente `id_operacion`.
 
-Esto permitió evitar que se contabilizaran operaciones repetidas sin eliminar registros diferentes por compartir un identificador.
+Este criterio permitió evitar que se contabilizaran registros repetidos sin descartar operaciones diferentes por compartir un identificador.
 
 ## 6. Estandarización de datos
 
@@ -102,7 +102,7 @@ Unifiqué los valores para que quedaran representados de manera consistente como
 - Sucursal
 - Telefónico
 
-Esto evita que un mismo canal aparezca dividido en varias categorías durante la creación de reportes.
+Esto permite agrupar correctamente las operaciones por canal comercial y evitar categorías repetidas por diferencias de escritura.
 
 ## 7. Normalización de la estructura
 
@@ -110,37 +110,37 @@ Una vez terminada la limpieza, separé la información en dos consultas utilizan
 
 ### Tabla Clientes
 
-Contiene 119 clientes identificados de forma única mediante `id_cliente`.
+La tabla contiene **119 clientes únicos**, identificados mediante el campo `id_cliente`.
 
-Conservé los datos de identificación, contacto, ubicación, segmento comercial, estado y fecha de alta.
+Conservé la información de identificación, contacto, ubicación, segmento comercial, estado del cliente y fecha de alta.
 
 ### Tabla Ventas
 
-Contiene 900 registros de operaciones comerciales.
+La tabla contiene **900 registros de ventas**, con la información de las operaciones comerciales.
 
-Conservé la información relacionada con el identificador de operación, cliente, producto, fechas, cantidades, precios, descuentos, importes y canal de venta.
+Conservé los identificadores de operación, cliente y producto, además de las fechas, cantidades, precios, descuentos, importes y canales de venta.
 
 ### Relación entre tablas
 
-Relacioné ambas tablas mediante el campo `id_cliente`, utilizando una relación de uno a muchos (1:*).
+Relacioné ambas tablas mediante `id_cliente`, utilizando una relación de uno a muchos (1:*).
 
-Esto permite que un cliente tenga varias operaciones de venta sin necesidad de repetir todos sus datos personales en cada registro de la tabla Clientes.
+Esto permite que un mismo cliente tenga varias operaciones de venta sin necesidad de repetir toda su información personal en la tabla Clientes.
 
 ## 8. Validación final
 
-Al finalizar, revisé que los importes calculados no presentaran valores vacíos ni errores, que los identificadores principales fueran válidos y que los canales de venta estuvieran estandarizados.
+Al finalizar las transformaciones, revisé que los importes calculados no presentaran valores vacíos ni errores y que los identificadores principales fueran válidos.
 
-También comprobé que la tabla Clientes tuviera un solo registro por identificador y que la relación con Ventas quedara activa.
+También comprobé que los canales de venta estuvieran estandarizados, que la tabla Clientes tuviera un registro por identificador y que la relación entre Clientes y Ventas quedara activa.
 
 ## 9. Conclusión
 
-Esta práctica me sirvió para entender mejor la importancia de preparar los datos antes de comenzar a construir visualizaciones.
+Este trabajo me ayudó a entender mejor la importancia de preparar los datos antes de comenzar a realizar visualizaciones.
 
-Una de las cosas que aprendí es que no siempre conviene eliminar una fila solamente porque tiene información faltante. Primero es necesario revisar qué dato falta, si puede recuperarse y cómo podría afectar al análisis.
+Una de las cosas que aprendí es que no siempre conviene eliminar un registro solamente porque tiene información faltante. Primero es necesario revisar qué dato falta, si es posible recuperarlo y cómo podría afectar los resultados del análisis.
 
-También me resultó útil trabajar con la separación de clientes y ventas, porque permite mantener la información más ordenada y evitar repeticiones innecesarias.
+También me resultó útil trabajar con la separación de clientes y ventas, porque permite mantener una estructura más ordenada y evitar información repetida innecesariamente.
 
-El resultado fue un conjunto de datos preparado para continuar trabajando en Power BI, con las transformaciones registradas y una estructura que facilita futuras consultas comerciales.
+El resultado fue un conjunto de datos preparado para continuar trabajando en Power BI, con las transformaciones registradas y un modelo que facilita futuros análisis comerciales.
 
 ## Herramientas utilizadas
 
